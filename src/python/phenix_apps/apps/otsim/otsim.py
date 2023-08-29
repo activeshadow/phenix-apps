@@ -64,9 +64,11 @@ class OTSim(AppBase):
                 addr = node.network.interfaces[0]['address']
 
           assert addr
-          return addr
+          assert hostname
+
+          return addr, hostname
         elif 'address' in broker:
-          return broker['address']
+          return broker['address'], None
 
 
   def __init_defaults(self):
@@ -159,12 +161,12 @@ class OTSim(AppBase):
 
         if 'helics' in md:
           if 'broker' in md['helics']:
-            addr = self.__process_helics_broker_metadata(md)
+            broker_addr, broker_hostname = self.__process_helics_broker_metadata(md)
           else:
-            addr = self.__process_helics_broker_metadata(self.metadata)
+            broker_addr, broker_hostname = self.__process_helics_broker_metadata(self.metadata)
 
-          assert addr
-          broker.text = addr
+          assert broker_addr
+          broker.text = broker_addr
 
           if 'federate' in md['helics']:
             if isinstance(md['helics']['federate'], str):
@@ -177,10 +179,10 @@ class OTSim(AppBase):
             federate.text  = server.hostname
             log_level.text = 'SUMMARY'
         else:
-          addr = self.__process_helics_broker_metadata(self.metadata)
-          assert addr
+          broker_addr, broker_hostname = self.__process_helics_broker_metadata(self.metadata)
+          assert broker_addr
 
-          broker.text    = addr
+          broker.text    = broker_addr
           federate.text  = server.hostname
           log_level.text = 'SUMMARY'
 
@@ -192,6 +194,9 @@ class OTSim(AppBase):
         module.text = 'ot-sim-io-module {{config_file}}'
 
         config.append_to_cpu(module)
+
+        annotation = [{'broker': {'hostname': broker_hostname, 'endpoint': broker_addr}, 'fed-count': 1}]
+        self.add_annotation(server.hostname, 'helics/federate', annotation)
 
       if 'logic' in md:
         logic = Logic.parse_metadata(md)
