@@ -3,12 +3,12 @@ import os
 from phenix_apps.apps   import AppBase
 from phenix_apps.common import logger, utils
 
-# apps:
-#   helics:
-#     metadata:
-#       broker:
-#         root: <ip:port>    # optional location of root broker (assumed to already be in topology)
-#         log-level: summary # log level to apply to every broker created
+#  apps:
+#  - name: helics
+#    metadata:
+#      broker:
+#        root: <ip:port>    # optional location of root broker (assumed to already be in topology)
+#        log-level: summary # log level to apply to every broker created
 
 class Helics(AppBase):
   def __init__(self):
@@ -17,7 +17,6 @@ class Helics(AppBase):
     self.helics_dir = f"{self.exp_dir}/helics"
     os.makedirs(self.helics_dir, exist_ok=True)
 
-    self.__init_defaults()
     self.execute_stage()
 
     # We don't (currently) let the parent AppBase class handle this step
@@ -56,12 +55,13 @@ class Helics(AppBase):
 
     templates = utils.abs_path(__file__, 'templates/')
 
-    for hostname, config in self.brokers.items():
+    for hostname, config in brokers.items():
       start_file = f'{self.helics_dir}/{hostname}-broker.sh'
 
       cfg = {
         'feds':      config['fed-count'],
         'log-level': self.metadata.get('broker', {}).get('log-level', 'summary'),
+        'log-file': self.metadata.get('broker', {}).get('log-file', '/var/log/helics-broker.log'),
       }
 
       if len(brokers) > 1:
@@ -72,3 +72,10 @@ class Helics(AppBase):
         utils.mako_serve_template('broker.mako', templates, f, cfg=cfg)
 
       self.add_inject(hostname=hostname, inject={'src': start_file, 'dst': '/etc/phenix/startup/90-helics-broker.sh'})
+
+def main():
+  Helics()
+
+
+if __name__ == '__main__':
+  main()
