@@ -66,9 +66,13 @@ class Helics(AppBase):
             }
 
             if len(brokers) > 1:
-                root = self.metadata.get('broker', {}).get('root', '127.0.0.1')
-                if self.extract_node_hostname_from_ip(root) != hostname:
-                    cfg['parent'] = root
+                root_ip = self.metadata.get('broker', {}).get('root', '127.0.0.1')
+                root_hostname = self.extract_node_hostname_from_ip(root_ip)
+                if not root_hostname:
+                    logger.log('ERROR', f'Root broker IP not found in topology: {root_ip}')
+                    # TODO: exit err?
+                if self.extract_node_hostname_from_ip(root_ip) != hostname:
+                    cfg['parent'] = root_ip
                     cfg['endpoint'] = config['endpoint']
                 else:
                     cfg['feds'] = total_fed_count
