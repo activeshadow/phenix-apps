@@ -71,7 +71,7 @@ class Helics(AppBase):
                 if not root_hostname:
                     logger.log('ERROR', f'Root broker IP not found in topology: {root_ip}')
                     # TODO: exit err?
-                if self.extract_node_hostname_from_ip(root_ip) != hostname:
+                if root_hostname != hostname:
                     cfg['parent'] = root_ip
                     cfg['endpoint'] = config['endpoint']
                 else:
