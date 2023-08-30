@@ -293,6 +293,15 @@ class AppBase(object):
                 else:
                     return i['address']
 
+    def extract_node_hostname_from_ip(self, address):
+        nodes = self.experiment.spec.topology.nodes
+
+        for node in nodes:
+            for i in node.network.interfaces:
+                if 'address' in i and i['address'] == address:
+                    return node.general.hostname
+        return None
+
     def add_node(self, node):
         self.experiment.spec.topology.nodes.append(node)
 

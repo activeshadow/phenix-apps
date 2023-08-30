@@ -65,8 +65,10 @@ class Helics(AppBase):
       }
 
       if len(brokers) > 1:
-        cfg['parent'] = self.metadata.get('broker', {}).get('root', '127.0.0.1')
-        cfg['endpoint'] = config['endpoint']
+        root = self.metadata.get('broker', {}).get('root', '127.0.0.1')
+        if self.extract_node_hostname_from_ip(root) != hostname:
+          cfg['parent'] = root
+          cfg['endpoint'] = config['endpoint']
 
       with open(start_file, 'w') as f:
         utils.mako_serve_template('broker.mako', templates, f, cfg=cfg)
