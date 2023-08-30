@@ -30,6 +30,7 @@ class Helics(AppBase):
 
     # broker hosts --> {endpoint: <ip:port>, fed-count: <num>}
     brokers = {}
+    total_fed_count = 0
     federates = self.extract_annotated_topology_nodes('helics/federate')
 
     for fed in federates:
@@ -47,6 +48,7 @@ class Helics(AppBase):
 
         brokers[hostname] = entry
 
+        total_fed_count += count
 
     if len(brokers) == 1:
       pass
@@ -69,6 +71,9 @@ class Helics(AppBase):
         if self.extract_node_hostname_from_ip(root) != hostname:
           cfg['parent'] = root
           cfg['endpoint'] = config['endpoint']
+        else:
+          cfg['feds'] = total_fed_count
+          cfg['subs'] = len(brokers) - 1
 
       with open(start_file, 'w') as f:
         utils.mako_serve_template('broker.mako', templates, f, cfg=cfg)
