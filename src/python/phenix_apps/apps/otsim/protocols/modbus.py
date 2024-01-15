@@ -14,13 +14,23 @@ class Modbus(Protocol):
 
   def init_xml_root(self, mode, node, name='modbus-outstation'):
     self.mode = mode
-
     self.root = ET.Element('modbus', {'name': name, 'mode': mode})
-    endpoint = ET.SubElement(self.root, 'endpoint')
 
     md = node.metadata
 
     if 'modbus' in md and isinstance(md['modbus'], dict):
+      if 'serial' in md['modbus']:
+        dev  = md['modbus']['serial'].get('device', '/dev/ttyS4')
+        baud = md['modbus']['serial'].get('baud',   9600)
+
+        serial = ET.SubElement(self.root, 'serial')
+
+        device = ET.SubElement(serial, 'device')
+        device.text = dev
+
+        rate = ET.SubElement(serial, 'baud-rate')
+        rate.text = str(baud)
+
       if 'interface' in md['modbus']:
         if ':' in md['modbus']['interface']:
           addr, port = md['modbus']['interface'].split(':', 1)
@@ -37,18 +47,20 @@ class Modbus(Protocol):
             if i['name'] == addr and 'address' in i:
               ip = i['address']
               break
-      else:
-        if len(node.topology.network.interfaces[0]) > 0:
-          ip   = node.topology.network.interfaces[0].address
-          port = 502
+
+        assert ip
+
+        endpoint = ET.SubElement(self.root, 'endpoint')
+        endpoint.text = f'{ip}:{port}'
     else: # legacy way of getting IP address
       if len(node.topology.network.interfaces[0]) > 0:
         ip   = node.topology.network.interfaces[0].address
         port = 502
 
-    assert ip
+      assert ip
 
-    endpoint.text = f'{ip}:{port}'
+      endpoint = ET.SubElement(self.root, 'endpoint')
+      endpoint.text = f'{ip}:{port}'
 
 
   def registers_to_xml(self, registers):

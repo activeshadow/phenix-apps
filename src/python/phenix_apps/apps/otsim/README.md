@@ -162,6 +162,9 @@ spec:
                                  # defaults to helics.endpoint in app metadata if not set here
                                  # set to false to disable using endpoints for this topic
           dnp3:
+            serial:
+              device: /dev/ttyS4
+              baud: 9600
             interface: IF1:20000
             devices:
             - name: line-01-03

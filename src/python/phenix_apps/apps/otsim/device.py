@@ -222,7 +222,8 @@ class FieldDeviceClient(Device):
   def process(self, devices):
     if self.processed: return
 
-    for name in self.md.get('connected_rtus', []):
+    # Support legacy `connected_rtus` key if `upstream` key is not present.
+    for name in self.md.get('upstream', self.md.get('connected_rtus', [])):
       device = devices[name]
       assert device
 
@@ -233,8 +234,9 @@ class FieldDeviceClient(Device):
   def configure(self, config, known):
     protos = {}
 
-    for downstream in self.md.get('connected_rtus', []):
-      device = known[downstream]
+    # Support legacy `connected_rtus` key if `upstream` key is not present.
+    for upstream in self.md.get('upstream', self.md.get('connected_rtus', [])):
+      device = known[upstream]
 
       if 'modbus' in device.registers:
         client = Modbus()

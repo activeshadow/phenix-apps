@@ -14,13 +14,23 @@ class DNP3(Protocol):
 
   def init_xml_root(self, mode, node, name='dnp3-outstation'):
     self.mode = mode
-
     self.root = ET.Element('dnp3', {'name': name, 'mode': mode})
-    endpoint = ET.SubElement(self.root, 'endpoint')
 
     md = node.metadata
 
     if 'dnp3' in md and isinstance(md['dnp3'], dict):
+      if 'serial' in md['dnp3']:
+        dev  = md['dnp3']['serial'].get('device', '/dev/ttyS4')
+        baud = md['dnp3']['serial'].get('baud',   9600)
+
+        serial = ET.SubElement(self.root, 'serial')
+
+        device = ET.SubElement(serial, 'device')
+        device.text = dev
+
+        rate = ET.SubElement(serial, 'baud-rate')
+        rate.text = str(baud)
+
       if 'interface' in md['dnp3']:
         if ':' in md['dnp3']['interface']:
           addr, port = md['dnp3']['interface'].split(':', 1)
@@ -37,18 +47,20 @@ class DNP3(Protocol):
             if i['name'] == addr and 'address' in i:
               ip = i['address']
               break
-      else:
-        if len(node.topology.network.interfaces[0]) > 0:
-          ip   = node.topology.network.interfaces[0].address
-          port = 20000
+
+        assert ip
+
+        endpoint = ET.SubElement(self.root, 'endpoint')
+        endpoint.text = f'{ip}:{port}'
     else: # legacy way of getting IP address
       if len(node.topology.network.interfaces[0]) > 0:
         ip   = node.topology.network.interfaces[0].address
         port = 20000
 
-    assert ip
+      assert ip
 
-    endpoint.text = f'{ip}:{port}'
+      endpoint = ET.SubElement(self.root, 'endpoint')
+      endpoint.text = f'{ip}:{port}'
 
 
   def init_master_xml(self, name='dnp3-master'):

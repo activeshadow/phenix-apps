@@ -106,6 +106,7 @@ class OTSim(AppBase):
     # federate. Will use default I/O federate provided in app metadata if
     # not provided as part of the device name(s).
     servers = self.extract_nodes_type('fd-server', False)
+    servers.extend(self.extract_nodes_type('outstation', False))
 
     for server in servers:
       md    = server.metadata
@@ -254,6 +255,7 @@ class OTSim(AppBase):
     # Field device client, acting as a protocol client via one or more protocol
     # modules. Also assumed to **not** include an I/O module.
     clients = self.extract_nodes_type('fd-client', False)
+    clients.extend(self.extract_nodes_type('client', False))
 
     # By this point, all the FEPs each client will potentially talk to should
     # have already been configured.
