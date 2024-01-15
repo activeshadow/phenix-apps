@@ -248,7 +248,7 @@ class FieldDeviceClient(Device):
 
       if 'modbus' in device.registers:
         if serial and 'serial' in device.node.metadata['modbus']:
-          device.node.metadata['modbus']['serial']['device'] = serial
+          device.node.metadata['modbus']['serial'] = [serial]
 
         client = Modbus()
         client.init_xml_root('client', device.node)
@@ -259,7 +259,7 @@ class FieldDeviceClient(Device):
 
       if 'dnp3' in device.registers:
         if serial and 'serial' in device.node.metadata['dnp3']:
-          device.node.metadata['dnp3']['serial']['device'] = serial
+          device.node.metadata['dnp3']['serial'] = [serial]
 
         client = DNP3()
         client.init_xml_root('client', device.node)

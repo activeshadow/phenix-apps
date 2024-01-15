@@ -143,7 +143,10 @@ class Config:
 
 
   def append_to_root(self, child):
-    self.root.append(child)
+    if isinstance(child, list):
+      self.root.extend(child)
+    else:
+      self.root.append(child)
 
 
   def append_to_cpu(self, child):
