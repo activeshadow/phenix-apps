@@ -13,18 +13,20 @@ class Register:
 
 
 class Device:
-  def __init__(self, node, default_infra = 'power-distribution'):
+  def __init__(self, node, default_infra = 'power-distribution', serial_links = None):
     self.node  = node
     self.md    = node.get('metadata', {})
     self.infra = self.md.get('infrastructure', default_infra)
+
+    self.serial_links = serial_links
 
     self.registers = {}
     self.processed = False
 
 
 class FEP(Device):
-  def __init__(self, node):
-    Device.__init__(self, node)
+  def __init__(self, node, serial_links = None):
+    Device.__init__(self, node, serial_links = serial_links)
 
   def process(self, devices):
     if self.processed: return
@@ -74,20 +76,15 @@ class FEP(Device):
 
       device = known[hostname]
 
-      if 'modbus' in device.registers:
-        if serial and 'serial' in device.node.metadata['modbus']:
-          device.node.metadata['modbus']['serial'] = [serial]
-
-        client = Modbus()
-        client.init_xml_root('client', device.node)
-        client.registers_to_xml(device.registers['modbus'])
-
-        config.append_to_root(client.root)
-        protos['modbus'] = True
-
       if 'dnp3' in device.registers:
         if serial and 'serial' in device.node.metadata['dnp3']:
-          device.node.metadata['dnp3']['serial'] = [serial]
+          if serial == 'app':
+            for link in self.serial_links[self.node.hostname]:
+              if link['remote'] == hostname:
+                device.node.metadata['dnp3']['serial'] = [link]
+                break
+          else:
+            device.node.metadata['dnp3']['serial'] = [serial]
 
         client = DNP3()
         client.init_xml_root('client', device.node)
@@ -97,6 +94,23 @@ class FEP(Device):
         config.append_to_root(client.root)
         protos['dnp3'] = True
 
+      if 'modbus' in device.registers:
+        if serial and 'serial' in device.node.metadata['modbus']:
+          if serial == 'app':
+            for link in self.serial_links[self.node.hostname]:
+              if link['remote'] == hostname:
+                device.node.metadata['modbus']['serial'] = [link]
+                break
+          else:
+            device.node.metadata['modbus']['serial'] = [serial]
+
+        client = Modbus()
+        client.init_xml_root('client', device.node)
+        client.registers_to_xml(device.registers['modbus'])
+
+        config.append_to_root(client.root)
+        protos['modbus'] = True
+
     registers = []
     for regs in self.registers.values():
       registers += regs
@@ -105,6 +119,19 @@ class FEP(Device):
 
     # Default to using DNP3 for downstream side.
     if not downstream or downstream == 'dnp3':
+      serial = self.node.metadata['dnp3'].get('serial', None)
+
+      if serial:
+        if serial == 'app':
+          self.node.metadata['dnp3']['serial'] = self.serial_links[self.node.hostname]
+        else:
+          for entry in serial:
+            if 'downstream' in entry:
+              for link in self.serial_links[self.node.hostname]:
+                if link['remote'] == entry['downstream']:
+                  entry['device'] = link['device']
+                  entry['baud']   = link['baud']
+
       server = DNP3()
       server.init_xml_root('server', self.node)
       server.init_outstation_xml()
@@ -113,6 +140,19 @@ class FEP(Device):
       config.append_to_root(server.root)
       protos['dnp3'] = True
     elif downstream == 'modbus':
+      serial = self.node.metadata['modbus'].get('serial', None)
+
+      if serial:
+        if serial == 'app':
+          self.node.metadata['modbus']['serial'] = self.serial_links[self.node.hostname]
+        else:
+          for entry in serial:
+            if 'downstream' in entry:
+              for link in self.serial_links[self.node.hostname]:
+                if link['remote'] == entry['downstream']:
+                  entry['device'] = link['device']
+                  entry['baud']   = link['baud']
+
       server = Modbus()
       server.init_xml_root('server', self.node)
       server.registers_to_xml(registers)
@@ -134,8 +174,8 @@ class FEP(Device):
 
 
 class FieldDeviceServer(Device):
-  def __init__(self, node, default_infra = 'power-distribution'):
-    Device.__init__(self, node, default_infra)
+  def __init__(self, node, default_infra = 'power-distribution', serial_links = None):
+    Device.__init__(self, node, default_infra = default_infra, serial_links = serial_links)
 
   def process(self, mappings):
     if self.processed: return
@@ -211,6 +251,11 @@ class FieldDeviceServer(Device):
 
   def configure(self, config):
     if 'dnp3' in self.registers:
+      serial = self.node.metadata['dnp3'].get('serial', None)
+
+      if serial and serial == 'app':
+        self.node.metadata['dnp3']['serial'] = self.serial_links[self.node.hostname]
+
       server = DNP3()
       server.init_xml_root('server', self.node)
       server.init_outstation_xml()
@@ -223,6 +268,11 @@ class FieldDeviceServer(Device):
       config.append_to_cpu(module)
 
     if 'modbus' in self.registers:
+      serial = self.node.metadata['modbus'].get('serial', None)
+
+      if serial and serial == 'app':
+        self.node.metadata['modbus']['serial'] = self.serial_links[self.node.hostname]
+
       server = Modbus()
       server.init_xml_root('server', self.node)
       server.registers_to_xml(self.registers['modbus'])
@@ -235,8 +285,8 @@ class FieldDeviceServer(Device):
 
 
 class FieldDeviceClient(Device):
-  def __init__(self, node):
-    Device.__init__(self, node)
+  def __init__(self, node, serial_links = None):
+    Device.__init__(self, node, serial_links = serial_links)
 
   def process(self, devices):
     if self.processed: return
@@ -270,20 +320,15 @@ class FieldDeviceClient(Device):
 
       device = known[hostname]
 
-      if 'modbus' in device.registers:
-        if serial and 'serial' in device.node.metadata['modbus']:
-          device.node.metadata['modbus']['serial'] = [serial]
-
-        client = Modbus()
-        client.init_xml_root('client', device.node)
-        client.registers_to_xml(device.registers['modbus'])
-
-        config.append_to_root(client.root)
-        protos['modbus'] = True
-
       if 'dnp3' in device.registers:
         if serial and 'serial' in device.node.metadata['dnp3']:
-          device.node.metadata['dnp3']['serial'] = [serial]
+          if serial == 'app':
+            for link in self.serial_links[self.node.hostname]:
+              if link['remote'] == hostname:
+                device.node.metadata['dnp3']['serial'] = [link]
+                break
+          else:
+            device.node.metadata['dnp3']['serial'] = [serial]
 
         client = DNP3()
         client.init_xml_root('client', device.node)
@@ -292,6 +337,23 @@ class FieldDeviceClient(Device):
 
         config.append_to_root(client.root)
         protos['dnp3'] = True
+
+      if 'modbus' in device.registers:
+        if serial and 'serial' in device.node.metadata['modbus']:
+          if serial == 'app':
+            for link in self.serial_links[self.node.hostname]:
+              if link['remote'] == hostname:
+                device.node.metadata['modbus']['serial'] = [link]
+                break
+          else:
+            device.node.metadata['modbus']['serial'] = [serial]
+
+        client = Modbus()
+        client.init_xml_root('client', device.node)
+        client.registers_to_xml(device.registers['modbus'])
+
+        config.append_to_root(client.root)
+        protos['modbus'] = True
 
     if 'modbus' in protos:
       module = ET.Element('module', {'name': 'modbus'})

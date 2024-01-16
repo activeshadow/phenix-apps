@@ -96,11 +96,46 @@ class OTSim(AppBase):
       self.default_endpoint = 'OpenDSS/updates'
 
 
+  def __serial_connections(self):
+    md = self.extract_metadata(app = 'serial')
+
+    if md:
+      connections = md.get('connections', [])
+
+      ids   = {} # serial device ID number
+      links = {} # serial point-to-point links (a --> [b = {device: a[dev], baud: <int>}])
+
+      for conn in connections:
+        if conn.src not in ids:
+          ids[conn.src] = 4 # qemu starts serial devices at /dev/ttyS4
+
+        if conn.dst not in ids:
+          ids[conn.dst] = 4 # qemu starts serial devices at /dev/ttyS4
+
+        baud = conn.get('baud', 9600)
+
+        if conn.src not in links:
+          links[conn.src] = []
+
+        if conn.dst not in links:
+          links[conn.dst] = []
+
+        links[conn.src].append({'remote': conn.dst, 'device': f'/dev/ttyS{ids[conn.src]}', 'baud': baud})
+        links[conn.dst].append({'remote': conn.src, 'device': f'/dev/ttyS{ids[conn.dst]}', 'baud': baud})
+
+        ids[conn.src] += 1
+        ids[conn.dst] += 1
+
+      return links
+
+
   def pre_start(self):
     logger.log('INFO', f'Starting user application: {self.name}')
 
     ot_devices = {}
     mappings   = self.metadata.get('infrastructures', {})
+
+    serial_links = self.__serial_connections()
 
     # Field device, assumed to use the I/O module that acts as a HELICS
     # federate. Will use default I/O federate provided in app metadata if
@@ -115,7 +150,7 @@ class OTSim(AppBase):
       config = Config(self.metadata)
       config.init_xml_root(server.metadata)
 
-      device = FieldDeviceServer(server, infra)
+      device = FieldDeviceServer(server, default_infra = infra, serial_links = serial_links)
       device.process(mappings)
       device.configure(config)
 
@@ -227,7 +262,7 @@ class OTSim(AppBase):
     # Preload all the FEPs so they can force downstream FEPs to process their
     # configs during their own processing.
     for fep in feps:
-      ot_devices[fep.hostname] = FEP(fep)
+      ot_devices[fep.hostname] = FEP(fep, serial_links = serial_links)
 
     for fep in feps:
       config = Config(self.metadata)
@@ -264,7 +299,7 @@ class OTSim(AppBase):
       config = Config(self.metadata)
       config.init_xml_root(client.metadata)
 
-      device = FieldDeviceClient(client)
+      device = FieldDeviceClient(client, serial_links = serial_links)
       device.process(ot_devices)
       device.configure(config, ot_devices)
 

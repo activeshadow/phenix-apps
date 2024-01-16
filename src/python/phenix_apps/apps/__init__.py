@@ -260,10 +260,11 @@ class AppBase(object):
 
         return app.get('assetDir', None)
 
-    def extract_metadata(self):
-        app = self.extract_app()
+    def extract_metadata(self, app = None):
+        app = self.extract_app(name = app)
 
-        return app.get('metadata', {})
+        if app:
+            return app.get('metadata', {})
 
     def extract_node_metadata(self, hostname):
         app = self.extract_app()

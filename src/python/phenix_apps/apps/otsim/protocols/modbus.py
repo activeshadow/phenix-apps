@@ -19,7 +19,7 @@ class Modbus(Protocol):
     md = node.metadata
 
     if 'modbus' in md and isinstance(md['modbus'], dict):
-      for entry in md['dnp3'].get('serial', []):
+      for entry in md['modbus'].get('serial', []):
         dev  = entry.get('device', '/dev/ttyS4')
         baud = entry.get('baud',   9600)
 
