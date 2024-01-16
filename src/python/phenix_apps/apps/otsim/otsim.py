@@ -171,7 +171,6 @@ class OTSim(AppBase):
           else:
             addr = self.__process_helics_broker_metadata(self.metadata)
 
-          assert addr
           broker.text = addr
 
           if 'federate' in md['helics']:
@@ -186,23 +185,23 @@ class OTSim(AppBase):
             log_level.text = 'SUMMARY'
         else:
           addr = self.__process_helics_broker_metadata(self.metadata)
-          assert addr
 
           broker.text    = addr
           federate.text  = server.hostname
           log_level.text = 'SUMMARY'
 
-        infrastructure.io_module_xml(io, infra, devices)
+        if broker.text:
+          infrastructure.io_module_xml(io, infra, devices)
 
-        config.append_to_root(io)
+          config.append_to_root(io)
 
-        module = ET.Element('module', {'name': 'i/o'})
-        module.text = 'ot-sim-io-module {{config_file}}'
+          module = ET.Element('module', {'name': 'i/o'})
+          module.text = 'ot-sim-io-module {{config_file}}'
 
-        config.append_to_cpu(module)
+          config.append_to_cpu(module)
 
-        annotation = [{'broker': addr, 'fed-count': 1}]
-        self.add_annotation(server.hostname, 'helics/federate', annotation)
+          annotation = [{'broker': addr, 'fed-count': 1}]
+          self.add_annotation(server.hostname, 'helics/federate', annotation)
 
       if 'logic' in md:
         logic = Logic.parse_metadata(md)

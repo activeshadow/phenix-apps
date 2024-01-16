@@ -223,8 +223,13 @@ class FieldDeviceClient(Device):
     if self.processed: return
 
     # Support legacy `connected_rtus` key if `upstream` key is not present.
-    for name in self.md.get('upstream', self.md.get('connected_rtus', [])):
-      device = devices[name]
+    for upstream in self.md.get('upstream', self.md.get('connected_rtus', [])):
+      if isinstance(upstream, dict):
+        hostname = upstream.get('hostname')
+      else:
+        hostname = upstream
+
+      device = devices[hostname]
       assert device
 
       device.process(devices)
