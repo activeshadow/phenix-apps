@@ -222,6 +222,7 @@ class OTSim(AppBase):
     # proxy via two or more protocol modules acting in client/server
     # configurations. Also assumed to **not** include an I/O module.
     feps = self.extract_nodes_type('fep', False)
+    feps.extend(self.extract_nodes_type('rtu', False))
 
     # Preload all the FEPs so they can force downstream FEPs to process their
     # configs during their own processing.

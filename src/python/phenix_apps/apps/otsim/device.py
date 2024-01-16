@@ -40,8 +40,13 @@ class FEP(Device):
     # may want to only make a subset of registers available downstream.
 
     # Support legacy `connected_rtus` key if `upstream` key is not present.
-    for name in self.md.get('upstream', self.md.get('connected_rtus', [])):
-      device = devices[name]
+    for upstream in self.md.get('upstream', self.md.get('connected_rtus', [])):
+      if isinstance(upstream, dict):
+        hostname = upstream.get('hostname')
+      else:
+        hostname = upstream
+
+      device = devices[hostname]
       assert device
 
       device.process(devices)
@@ -59,9 +64,20 @@ class FEP(Device):
 
     # Support legacy `connected_rtus` key if `upstream` key is not present.
     for upstream in self.md.get('upstream', self.md.get('connected_rtus', [])):
-      device = known[upstream]
+      serial = None
+
+      if isinstance(upstream, dict):
+        hostname = upstream.get('hostname')
+        serial   = upstream.get('serial')
+      else:
+        hostname = upstream
+
+      device = known[hostname]
 
       if 'modbus' in device.registers:
+        if serial and 'serial' in device.node.metadata['modbus']:
+          device.node.metadata['modbus']['serial'] = [serial]
+
         client = Modbus()
         client.init_xml_root('client', device.node)
         client.registers_to_xml(device.registers['modbus'])
@@ -70,6 +86,9 @@ class FEP(Device):
         protos['modbus'] = True
 
       if 'dnp3' in device.registers:
+        if serial and 'serial' in device.node.metadata['dnp3']:
+          device.node.metadata['dnp3']['serial'] = [serial]
+
         client = DNP3()
         client.init_xml_root('client', device.node)
         client.init_master_xml()
