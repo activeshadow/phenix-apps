@@ -1,7 +1,9 @@
+from phenix_apps.apps.scale.apps import register_app_class
+
 class Builtin:
-    def __init__(self, per_node, count):
+    def __init__(self, per_node, config):
         self.per_node = per_node
-        self.count = count
+        self.count    = config.get('count', 42)
 
     def nodes(self):
         nodes, extra = divmod(self.count, self.per_node) # (x//y, x%y)
@@ -20,3 +22,6 @@ class Builtin:
             containers.append(f'builtin-{node * self.per_node + i}')
 
         return containers
+
+
+register_app_class('builtin', Builtin)

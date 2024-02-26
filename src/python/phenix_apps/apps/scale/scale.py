@@ -7,7 +7,7 @@ from itertools import islice
 from phenix_apps.apps   import AppBase
 from phenix_apps.common import logger, utils, settings
 
-from phenix_apps.apps.scale.builtin import Builtin
+from phenix_apps.apps.scale.apps import apps
 
 import minimega
 
@@ -142,15 +142,14 @@ class Scale(AppBase):
             app_name = app.get('name', 'builtin')
             per_node = profile.get('containers', 100)
 
-            nodes = 0
+            Klass = apps[app_name]
 
-            if app_name == 'builtin':
-                count = app.get('count', 42)
-                klass = Builtin(per_node, count)
-                nodes = klass.nodes()
-            else:
+            if klass is None:
                 logger.log('ERROR', f'invalid scale app name provided: {app_name}')
                 sys.exit(1)
+
+            klass = Klass(per_node, app)
+            nodes = klass.nodes()
 
             for i in range(0, nodes):
                 hostname = f"scale-profile-{profile_name}-{i}"
