@@ -35,8 +35,8 @@ import minimega
 #           gateway: MGMT # default route to use in containers (IP or tapped VLAN name)
 #           rootfs: tar:rootfs.tgz
 #         app:
-#           name: built-in
-#           count: 534
+#           name: builtin
+#           count: 42
 
 class Scale(AppBase):
     def __init__(self):
@@ -139,12 +139,12 @@ class Scale(AppBase):
             }
 
             app      = profile.get('app', {})
-            app_name = app.get('name', 'built-in')
+            app_name = app.get('name', 'builtin')
             per_node = profile.get('containers', 100)
 
             nodes = 0
 
-            if app_name == 'built-in':
+            if app_name == 'builtin':
                 count = app.get('count', 42)
                 klass = Builtin(per_node, count)
                 nodes = klass.nodes()
@@ -253,13 +253,13 @@ class Scale(AppBase):
                 mm = minimega.connect(namespace=self.exp_name)
 
             app      = profile.get('app', {})
-            app_name = app.get('name', 'built-in')
+            app_name = app.get('name', 'builtin')
             per_node = profile.get('containers', 100)
 
             klass = None
             nodes = 0
 
-            if app_name == 'built-in':
+            if app_name == 'builtin':
                 count = app.get('count', 42)
                 klass = Builtin(per_node, count)
                 nodes = klass.nodes()
