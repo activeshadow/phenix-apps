@@ -20,6 +20,7 @@ ENTRIES = {
         'phenix-app-helics = phenix_apps.apps.helics.helics:main',
         'phenix-app-ot-sim = phenix_apps.apps.otsim.otsim:main',
         'phenix-app-protonuke = phenix_apps.apps.protonuke.protonuke:main',
+        'phenix-app-scale = phenix_apps.apps.scale.scale:main',
         'phenix-app-sceptre = phenix_apps.apps.sceptre.sceptre:main',
         'phenix-app-wind-turbine = phenix_apps.apps.wind_turbine.wind_turbine:main',
         'phenix-app-wireguard = phenix_apps.apps.wireguard.wireguard:main',
