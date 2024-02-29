@@ -318,7 +318,7 @@ class WindTurbine(AppBase):
       anemo = self.extract_app_node(node.metadata.controllers.anemometer)
 
     mb = Modbus()
-    mb.init_xml_root('client', anemo)
+    mb.init_xml_root('client', anemo, name=anemo.hostname)
     mb.registers_to_xml(self.__anemometer_registers(anemo))
 
     config.append_to_root(mb.root)
@@ -327,7 +327,7 @@ class WindTurbine(AppBase):
       yaw = self.extract_app_node(node.metadata.controllers.yaw)
 
     mb = Modbus()
-    mb.init_xml_root('client', yaw)
+    mb.init_xml_root('client', yaw, name=yaw.hostname)
     mb.registers_to_xml(self.__yaw_registers())
 
     config.append_to_root(mb.root)
@@ -340,7 +340,7 @@ class WindTurbine(AppBase):
       })
 
       mb = Modbus()
-      mb.init_xml_root('client', blade)
+      mb.init_xml_root('client', blade, name=blade.hostname)
       mb.registers_to_xml(self.__blade_registers())
 
       config.append_to_root(mb.root)
