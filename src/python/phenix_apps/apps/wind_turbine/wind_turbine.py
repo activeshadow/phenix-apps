@@ -289,6 +289,8 @@ class WindTurbine(AppBase):
       yaw_setpoint = adjust ? target : yaw_setpoint
       # hack to get yaw.dir-error tag published to DNP3 module
       dir_error = dir_error
+      # hack to get turbine.emergency-stop tag published to DNP3 module
+      proto_emer_stop = proto_emer_stop
     """
 
     variables = {
