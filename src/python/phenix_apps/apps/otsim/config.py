@@ -63,6 +63,8 @@ class Config:
   def init_xml_root(self, md = {}):
     self.root = ET.Element('ot-sim')
 
+    injects = []
+
     msgbus = ET.SubElement(self.root, 'message-bus')
     pull   = ET.SubElement(msgbus, 'pull-endpoint')
     pub    = ET.SubElement(msgbus, 'pub-endpoint')
@@ -85,14 +87,20 @@ class Config:
 
         if 'tls-key' in md['cpu-module']['api'] and 'tls-certificate' in md['cpu-module']['api']:
           tlskey = ET.SubElement(api, 'tls-key')
-          tlskey.text = md['cpu-module']['api']['tls-key']
+          tlskey.text = '/etc/ot-sim/certs/api.key'
+
+          injects.append({'src': md['cpu-module']['api']['tls-key'], 'dst': '/etc/ot-sim/certs/api.key'})
 
           tlscert = ET.SubElement(api, 'tls-certificate')
-          tlscert.text = md['cpu-module']['api']['tls-certificate']
+          tlscert.text = '/etc/ot-sim/certs/api.crt'
+
+          injects.append({'src': md['cpu-module']['api']['tls-certificate'], 'dst': '/etc/ot-sim/certs/api.crt'})
 
         if 'ca-certificate' in md['cpu-module']['api']:
           cacert = ET.SubElement(api, 'ca-certificate')
-          cacert.text = md['cpu-module']['api']['ca-certificate']
+          cacert.text = '/etc/ot-sim/certs/api.ca.crt'
+
+          injects.append({'src': md['cpu-module']['api']['ca-certificate'], 'dst': '/etc/ot-sim/certs/api.ca.crt'})
       else:
         endpoint = md['cpu-module'].get('api-endpoint', self.default_api['endpoint'])
 
@@ -109,14 +117,20 @@ class Config:
 
       if 'tls-key' in self.default_api and 'tls-cert' in self.default_api:
         tlskey = ET.SubElement(api, 'tls-key')
-        tlskey.text = self.default_api['tls-key']
+        tlskey.text = '/etc/ot-sim/certs/api.key'
+
+        injects.append({'src': self.default_api['tls-key'], 'dst': '/etc/ot-sim/certs/api.key'})
 
         tlscert = ET.SubElement(api, 'tls-certificate')
-        tlscert.text = self.default_api['tls-cert']
+        tlscert.text = '/etc/ot-sim/certs/api.crt'
+
+        injects.append({'src': self.default_api['tls-cert'], 'dst': '/etc/ot-sim/certs/api.crt'})
 
       if 'ca-cert' in self.default_api:
         cacert = ET.SubElement(api, 'ca-certificate')
-        cacert.text = self.default_api['ca-cert']
+        cacert.text = '/etc/ot-sim/certs/api.ca.crt'
+
+        injects.append({'src': self.default_api['ca-cert'], 'dst': '/etc/ot-sim/certs/api.ca.crt'})
 
     if 'logs' in md:
       if 'elastic' in md['logs']:
@@ -188,6 +202,8 @@ class Config:
       idx.text = self.ground_truth['elastic']['default_index_base_name']
 
       ET.SubElement(self.cpu, 'module', {'name': 'ground-truth'}).text = 'ot-sim-ground-truth-module {{config_file}}'
+
+    return injects
 
 
   def append_to_root(self, child):
