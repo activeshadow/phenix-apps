@@ -159,7 +159,7 @@ class Caldera(AppBase):
                     utils.mako_serve_template('windows_agent.mako', templates, f, addr=addr)
 
                 # default running as SYSTEM for backwards compatibility
-                if host.metadata.get(system, True):
+                if host.metadata.get('system', True):
                     self.add_inject(hostname=host.hostname, inject={'src': agent_file, 'dst': '/phenix/startup/90-sandcat-agent.ps1'})
                 else:
                     self.add_inject(hostname=host.hostname, inject={'src': agent_file, 'dst': '/phenix/user-startup/90-sandcat-agent.ps1'})
