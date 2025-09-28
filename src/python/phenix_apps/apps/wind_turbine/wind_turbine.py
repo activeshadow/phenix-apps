@@ -352,27 +352,48 @@ class WindTurbine(AppBase):
 
     config.append_to_cpu(module)
 
-    dnp = DNP3()
-    dnp.init_xml_root('server', node)
-    dnp.init_outstation_xml()
+    outstation = node.metadata.get('outstation', {})
 
-    registers = [
-      Register('binary-read-write', 'turbine.emergency-stop', {'sbo': str(sbo).lower()}),
-      Register('analog-read-write', 'yaw.dir-error',          {'sbo': str(sbo).lower()}),
-      Register('analog-read',       'yaw.current'),
-      Register('analog-read',       'yaw.setpoint'),
-      Register('analog-read',       'turbine.mw-output'),
-      Register('binary-read',       'feathered'),
-    ] + self.__anemometer_registers(anemo)
+    # enable DNP3 outstation by default for backwards compatibility
+    if outstation.get('dnp3', True):
+      dnp = DNP3()
+      dnp.init_xml_root('server', node)
+      dnp.init_outstation_xml()
 
-    dnp.registers_to_xml(registers)
+      registers = [
+        Register('binary-read-write', 'turbine.emergency-stop', {'sbo': str(sbo).lower()}),
+        Register('analog-read-write', 'yaw.dir-error',          {'sbo': str(sbo).lower()}),
+        Register('analog-read',       'yaw.current'),
+        Register('analog-read',       'yaw.setpoint'),
+        Register('analog-read',       'turbine.mw-output'),
+        Register('binary-read',       'feathered'),
+      ] + self.__anemometer_registers(anemo)
 
-    config.append_to_root(dnp.root)
+      dnp.registers_to_xml(registers)
 
-    module = ET.Element('module', {'name': 'dnp3'})
-    module.text = 'ot-sim-dnp3-module {{config_file}}'
+      config.append_to_root(dnp.root)
 
-    config.append_to_cpu(module)
+      module = ET.Element('module', {'name': 'dnp3'})
+      module.text = 'ot-sim-dnp3-module {{config_file}}'
+
+      config.append_to_cpu(module)
+
+    if outstation.get('modbus', False):
+      mb = Modbus()
+      mb.init_xml_root('server', node)
+
+      registers = [
+        Register('binary-read-write', 'turbine.emergency-stop'),
+        Register('analog-read-write', 'yaw.dir-error',     {'scaling': 2}),
+        Register('analog-read',       'yaw.current',       {'scaling': 2}),
+        Register('analog-read',       'yaw.setpoint',      {'scaling': 2}),
+        Register('analog-read',       'turbine.mw-output', {'scaling': 2}),
+        Register('binary-read',       'feathered'),
+      ] + self.__anemometer_registers(anemo)
+
+      mb.registers_to_xml(registers)
+
+      config.append_to_root(mb.root)
 
     config_file = f'{self.ot_sim_dir}/{node.hostname}.xml'
     config.to_file(config_file)
