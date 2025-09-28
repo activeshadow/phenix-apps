@@ -33,4 +33,6 @@ spec:
         metadata:
           server: mallory:0 # will default to interface 0 if ':<idx>' isn't provided
                             # can also be an IP address (for external server)
+          system: true      # defaults to true; set to false to execute as
+                            # logged in user instead of SYSTEM (or root)
 ```

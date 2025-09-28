@@ -158,13 +158,22 @@ class Caldera(AppBase):
                 with open(agent_file, 'w') as f:
                     utils.mako_serve_template('windows_agent.mako', templates, f, addr=addr)
 
-                self.add_inject(hostname=host.hostname, inject={'src': agent_file, 'dst': '/phenix/startup/90-sandcat-agent.ps1'})
+                # default running as SYSTEM for backwards compatibility
+                if host.metadata.get(system, True):
+                    self.add_inject(hostname=host.hostname, inject={'src': agent_file, 'dst': '/phenix/startup/90-sandcat-agent.ps1'})
+                else:
+                    self.add_inject(hostname=host.hostname, inject={'src': agent_file, 'dst': '/phenix/user-startup/90-sandcat-agent.ps1'})
             elif host.topology.hardware.os_type == 'linux':
                 agent_file = f'{self.app_dir}/{host.hostname}-sandcat-agent.sh'
 
                 with open(agent_file, 'w') as f:
                     utils.mako_serve_template('linux_agent.mako', templates, f, addr=addr)
 
+                # TODO: (btr) inject as systemd service so it can be added to
+                # user's systemd units too... use phenix service to download
+                # agent, then have systemd actually run agent as either system
+                # or user. Mark systemd service to wait for phenix service to
+                # exit (e.g., using After=phenix.service).
                 self.add_inject(hostname=host.hostname, inject={'src': agent_file, 'dst': '/etc/phenix/startup/90-sandcat-agent.sh'})
 
         logger.log('INFO', f'Started user application: {self.name}')
